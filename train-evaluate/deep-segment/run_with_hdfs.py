@@ -19,7 +19,7 @@ from utils.tensorflow_utils import TensorflowUtils
 tf.app.flags.DEFINE_string('train_evaluate', 'train', 'train or evaluate')
 
 tf.app.flags.DEFINE_string('hdfs_host', 'hdfs-bizaistca.corp.microsoft.com', 'hdfs host')
-tf.app.flags.DEFINE_integer('hdfs_port', 8020, 'hdfs port')
+tf.app.flags.DEFINE_string('hdfs_port', '8020', 'hdfs port')
 tf.app.flags.DEFINE_string('hdfs_user', 'hadoop', 'hdfs user')
 
 # tf.app.flags.DEFINE_string('input_path', '/user/hadoop/data/input/', 'input data path')
@@ -151,7 +151,7 @@ class Segmenter(object):
 
 
 def main():
-    hdfs_client = HdfsUtils(FLAGS.hdfs_host, FLAGS.hdfs_port, FLAGS.hdfs_user)
+    hdfs_client = HdfsUtils(FLAGS.hdfs_host, int(FLAGS.hdfs_port), FLAGS.hdfs_user)
     hdfs_client.hdfs_download(os.path.join(FLAGS.input_path, 'config.json'), os.path.join(FLAGS.raw_data_path, 'config.json'))
 
     segmenter = Segmenter(hdfs_client, FLAGS)

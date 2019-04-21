@@ -165,7 +165,7 @@ def main():
             thread.start()
         thread.join()
         time.sleep(5)
-        segmenter.upload_data()
+        segmenter.upload_model()
     elif FLAGS.train_evaluate == 'evaluate':
         segmenter.evaluate()
 

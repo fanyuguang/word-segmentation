@@ -37,10 +37,11 @@ RUN git clone https://github.com/tensorflow/serving && \
 #Expose ports
 # gRPC
 EXPOSE 8500
+EXPOSE 8501
 
 # The only required piece is the model name in order to differentiate endpoints
-ENV MODEL_NAME ner 
+ENV MODEL_NAME segment
 # Set where models should be stored in the container
-ENV MODEL_BASE_PATH hdfs://hdfs-bizaistca.corp.microsoft.com:8020/user/hadoop/aiflow/tensorflow-serving-demo/saved-model-pb-data
+ENV MODEL_BASE_PATH hdfs://hdfs-bizaistca.corp.microsoft.com:8020/user/hadoop/fanyuguang/output/saved-model-data
 
-ENTRYPOINT ["tensorflow_model_server", "--port=8500", "--model_name=${MODEL_NAME}", "--model_base_path=${MODEL_BASE_PATH}"]
+ENTRYPOINT ["tensorflow_model_server", "--port=8500", "--rest_api_port=8501", "--model_name=${MODEL_NAME}", "--model_base_path=${MODEL_BASE_PATH}"]

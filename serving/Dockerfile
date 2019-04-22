@@ -3,14 +3,22 @@ FROM tensorflow/tensorflow:1.9.0-gpu-py3
 LABEL maintainer="yufa@microsoft.com"
 
 RUN add-apt-repository -y ppa:openjdk-r/ppa && \
-    echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list && \
-    curl https://bazel.build/bazel-release.pub.gpg | apt-key add - && \
     apt-get update && \
     apt-get install -y automake build-essential curl libcurl3-dev git libtool libfreetype6-dev libpng12-dev libzmq3-dev pkg-config software-properties-common swig zip zlib1g-dev && \
-    apt-get install -y --no-install-recommends openjdk-8-jdk openjdk-8-jre-headless bazel python3-dev python3-pip && \
+    apt-get install -y --no-install-recommends openjdk-8-jdk openjdk-8-jre-headless python3-dev python3-pip && \
     pip install six numpy wheel mock grpcio && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+WORKDIR /
+
+RUN wget https://github.com/bazelbuild/bazel/releases/download/0.15.0/bazel-0.15.0-dist.zip && \
+    mkdir bazel-0.15.0 && \
+    unzip bazel-0.15.0-dist.zip -d bazel-0.15.0/ && \
+    cd bazel-0.15.0/ && \
+    ./compile.sh
+
+ENV PATH "$PATH:/bazel-0.15.0/output"
 
 ENV HADOOP_VERSION 2.7.3
 RUN curl -O https://archive.apache.org/dist/hadoop/core/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz && \
@@ -29,6 +37,7 @@ ENV CLASSPATH /usr/local/hadoop/etc/hadoop:/usr/local/hadoop/share/hadoop/common
 
 RUN git clone https://github.com/tensorflow/serving && \
     cd serving && \
+    git checkout 1.9.0 && \
     bazel build -c opt --define with_hdfs_support=true --define with_s3_support=true tensorflow_serving/... && \
     cp bazel-bin/tensorflow_serving/model_servers/tensorflow_model_server /usr/local/bin/ && \
     bazel clean --expunge --color=yes && \

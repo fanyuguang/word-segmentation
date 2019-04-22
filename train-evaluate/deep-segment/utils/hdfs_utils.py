@@ -23,7 +23,7 @@ class HdfsUtils(object):
         local_parent_path = os.path.dirname(local_path)
         if not self.hdfs.exists(hdfs_path):
             raise Exception('hdfs file not exists: ' + hdfs_path)
-        if not os.path.exists(local_parent_path):
+        if local_parent_path.strip() and not os.path.exists(local_parent_path):
             raise Exception('local parent folder not exists: ' + local_parent_path)
         if os.path.exists(local_path):
             raise Exception('local file exists: ' + local_path)
@@ -60,7 +60,7 @@ class HdfsUtils(object):
         hdfs_parent_path = os.path.dirname(hdfs_path)
         if not os.path.exists(local_path):
             raise Exception('local file not exists: ' + local_path)
-        if not self.hdfs.exists(hdfs_parent_path):
+        if hdfs_parent_path.strip() and not self.hdfs.exists(hdfs_parent_path):
             raise Exception('hdfs parent folder not exists: ' + hdfs_parent_path)
         if self.hdfs.exists(hdfs_path):
             raise Exception('hdfs file exists: ' + hdfs_path)
@@ -77,9 +77,10 @@ class HdfsUtils(object):
                     current_hdfs_dir_path = os.path.join(hdfs_path, relative_path, dirname)
                     self.hdfs.mkdir(current_hdfs_dir_path)
                 for filename in filenames:
-                    current_local_file_path = os.path.join(root, filename)
-                    current_hdfs_file_path = os.path.join(hdfs_path, relative_path, filename)
-                    self.hdfs.put(current_local_file_path, current_hdfs_file_path)
+                    if filename != '.gitignore':
+                        current_local_file_path = os.path.join(root, filename)
+                        current_hdfs_file_path = os.path.join(hdfs_path, relative_path, filename)
+                        self.hdfs.put(current_local_file_path, current_hdfs_file_path)
         else:
             raise Exception('parameters invalid')
         print('Done.')
@@ -99,4 +100,4 @@ class HdfsUtils(object):
 
 
     def hdfs_mv(self, source_hdfs_path, target_hdfs_path):
-        self.hdfs(source_hdfs_path, target_hdfs_path)
+        self.hdfs.mv(source_hdfs_path, target_hdfs_path)

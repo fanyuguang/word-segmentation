@@ -22,10 +22,8 @@ tf.app.flags.DEFINE_string('hdfs_host', 'hdfs-bizaistca.corp.microsoft.com', 'hd
 tf.app.flags.DEFINE_string('hdfs_port', '8020', 'hdfs port')
 tf.app.flags.DEFINE_string('hdfs_user', 'hadoop', 'hdfs user')
 
-# tf.app.flags.DEFINE_string('input_path', '/user/hadoop/data/input/', 'input data path')
-# tf.app.flags.DEFINE_string('output_path', '/user/hadoop/data/output_path/', 'output_path data path')
-tf.app.flags.DEFINE_string('input_path', '/user/hadoop/fanyuguang/input/', 'input data path')
-tf.app.flags.DEFINE_string('output_path', '/user/hadoop/fanyuguang/output/', 'output data path')
+tf.app.flags.DEFINE_string('input_path', '/user/hadoop/data/input/', 'input data path')
+tf.app.flags.DEFINE_string('output_path', '/user/hadoop/data/output_path/', 'output_path data path')
 
 
 class Segmenter(object):
@@ -70,6 +68,8 @@ class Segmenter(object):
 
 
     def train(self):
+        self.train_is_alive = True
+
         self.hdfs_client.hdfs_download(os.path.join(self.flags.input_path, 'train.txt'), os.path.join(self.flags.datasets_path, 'train.txt'))
         self.hdfs_client.hdfs_download(os.path.join(self.flags.input_path, 'test.txt'), os.path.join(self.flags.datasets_path, 'test.txt'))
 
@@ -88,10 +88,12 @@ class Segmenter(object):
         tensorflow_utils.create_record(train_word_ids_list, train_label_ids_list, os.path.join(self.flags.tfrecords_path, 'train.tfrecords'))
         tensorflow_utils.create_record(test_word_ids_list, test_label_ids_list, os.path.join(self.flags.tfrecords_path, 'test.tfrecords'))
 
-        self.hdfs_client.hdfs_upload(self.flags.vocab_path, os.path.join(self.flags.output_path, os.path.basename(self.flags.vocab_path)))
+        self.hdfs_client.hdfs_upload(self.flags.vocab_path, os.path.join(self.flags.output_path, os.path.basename(os.path.normpath(self.flags.vocab_path))))
 
         train = Train()
         train.train()
+
+        self.train_is_alive = False
 
 
     def upload_tensorboard(self):
@@ -115,26 +117,17 @@ class Segmenter(object):
         hdfs_checkpoint_path = os.path.join(self.flags.output_path, os.path.basename(os.path.normpath(self.flags.checkpoint_path)))
         hdfs_saved_model_path = os.path.join(self.flags.output_path, os.path.basename(os.path.normpath(self.flags.saved_model_path)))
 
-        temp_hdfs_checkpoint_path = hdfs_checkpoint_path + '-temp'
-        temp_hdfs_saved_model_path = hdfs_saved_model_path + '-temp'
-
-        self.hdfs_client.hdfs_upload(self.flags.checkpoint_path, temp_hdfs_checkpoint_path)
-        self.hdfs_client.hdfs_upload(self.flags.saved_model_path, temp_hdfs_saved_model_path)
-
-        self.hdfs_client.hdfs_delete(hdfs_checkpoint_path)
-        self.hdfs_client.hdfs_delete(hdfs_saved_model_path)
-
-        self.hdfs_client.hdfs_mv(temp_hdfs_checkpoint_path, hdfs_checkpoint_path)
-        self.hdfs_client.hdfs_mv(temp_hdfs_saved_model_path, hdfs_saved_model_path)
+        self.hdfs_client.hdfs_upload(self.flags.checkpoint_path, hdfs_checkpoint_path)
+        self.hdfs_client.hdfs_upload(self.flags.saved_model_path, hdfs_saved_model_path)
 
 
     def evaluate(self):
         shutil.rmtree(self.flags.vocab_path)
         shutil.rmtree(self.flags.checkpoint_path)
 
-        self.hdfs_client.hdfs_download(os.path.join(self.flags.input_path, os.path.basename(self.flags.vocab_path)), self.flags.vocab_path)
+        self.hdfs_client.hdfs_download(os.path.join(self.flags.output_path, os.path.basename(os.path.normpath(self.flags.vocab_path))), self.flags.vocab_path)
         self.hdfs_client.hdfs_download(os.path.join(self.flags.input_path, 'test.txt'), os.path.join(self.flags.datasets_path, 'test.txt'))
-        hdfs_checkpoint_path = os.path.join(self.flags.input_path, os.path.basename(self.flags.checkpoint_path))
+        hdfs_checkpoint_path = os.path.join(self.flags.output_path, os.path.basename(os.path.normpath(self.flags.checkpoint_path)))
         self.hdfs_client.hdfs_download(hdfs_checkpoint_path, self.flags.checkpoint_path)
 
         self.data_utils.label_segment_file(os.path.join(self.flags.datasets_path, 'test.txt'), os.path.join(self.flags.datasets_path, 'label_test.txt'))
@@ -147,7 +140,7 @@ class Segmenter(object):
         self.model_evaluate.evaluate(os.path.join(self.flags.datasets_path, 'test_predict.txt'), os.path.join(self.flags.datasets_path, 'test_evaluate.txt'))
 
         self.hdfs_client.hdfs_delete(os.path.join(self.flags.output_path, 'test_evaluate.txt'))
-        self.hdfs_client.hdfs_upload(os.path.join(self.flags.datasets_path, 'test_evaluate.txt'), os.path.join(self.flags.input_path, 'test_evaluate.txt'))
+        self.hdfs_client.hdfs_upload(os.path.join(self.flags.datasets_path, 'test_evaluate.txt'), os.path.join(self.flags.output_path, 'test_evaluate.txt'))
 
 
 def main():

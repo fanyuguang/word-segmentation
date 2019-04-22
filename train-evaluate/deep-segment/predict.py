@@ -240,13 +240,13 @@ class Predict(object):
 def main(_):
     predict = Predict()
 
-    # sentence = '张伟在6月16号会去一趟丹棱街中国移动营业厅'
-    # sentence = ''.join(sentence.split())
-    # words = ' '.join([char for char in sentence])
-    # predict_labels, predict_scores = predict.predict([words, '你 好'])
-    # print(predict_labels)
-    # print(predict_scores)
-    #
+    sentence = '明天去上海'
+    sentence = ''.join(sentence.split())
+    words = ' '.join([char for char in sentence])
+    predict_labels, predict_scores = predict.predict([words, '你 好'])
+    print(predict_labels)
+    print(predict_scores)
+
     # predict.freeze_graph()
     predict.saved_model_pb()
 
